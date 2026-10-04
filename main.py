@@ -1,8 +1,8 @@
-from functions import *
+from functions import main
 import argparse
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Программа для анализа данных скорости ветра в файлах NetCDF.")
+    parser = argparse.ArgumentParser(description="Generate cyclone, anticyclone and tropical cyclone track maps from PostgreSQL data.")
     parser.add_argument(
         "--startdate", "-sd",
         required=False,
