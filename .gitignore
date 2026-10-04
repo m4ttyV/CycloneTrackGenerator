@@ -1,3 +1,25 @@
-*.png
-confing.conf
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+
+# Runtime / output files
 *.csv
+*.png
+*.jpg
+
+# Local configuration
+config.conf
+confing.conf
+
+# OS
+.DS_Store
+Thumbs.db
