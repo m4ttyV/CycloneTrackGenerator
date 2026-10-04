@@ -360,7 +360,7 @@ def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, i
     bm.drawcoastlines()
 
     # Считываем параметры БД
-    with open('confing.conf', 'r') as f:
+    with open('config.conf', 'r') as f:
         db_conf = f.read().splitlines()
 
     DB_HOST = ""
