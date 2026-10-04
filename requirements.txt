@@ -1,0 +1,7 @@
+numpy
+matplotlib
+shapely
+psycopg2-binary
+python-dateutil
+smbprotocol
+basemap
