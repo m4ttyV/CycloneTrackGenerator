@@ -10,53 +10,10 @@ from dateutil.relativedelta import relativedelta
 from datetime import datetime, timedelta
 from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
-
-class TrackRow:
-    """
-        Class of rows of tracks
-        Args:
-            coords: coords of track
-            name: name of track
-            id: id of track
-    """
-    def __init__(self, coords, name, id):
-        self.coords = coords
-        self.name = name
-        self.id = id
-
-class DotRow:
-    """
-        Class of rows of dots
-        Args:
-            lon: longitude of dot
-            lat: latitude of dot
-            type_id: type of dot
-            slp: pressure of dot
-
-    """
-    def __init__(self, lon, lat, type_id, slp, datetime):
-        self.lon = lon
-        self.lat = lat
-        self.type_id = type_id
-        self.slp = slp
-        self.datetime = datetime
-
-class CSVRow:
-    """
-        Class of rows for CSV-files
-        Args:
-            id: id of row
-            datetime: datetime of row
-            lon: longitude of row
-            lat: latitude of row
-            slp: pressure of row
-    """
-    def __init__(self, id, datetime, lon, lat, slp):
-        self.id = id
-        self.datetime = datetime
-        self.lon = lon
-        self.lat = lat
-        self.slp = slp
+from engine.config import load_config
+from engine.database import load_source_rows, get_cis_property_view_month, get_cis_track_view_month
+from engine.periods import calculate_period
+from engine.models import TrackRow, DotRow, CSVRow, prepare_rows
 
 def ensure_remote_directory(host: str, share: str, path: str):
     """
@@ -262,48 +219,6 @@ def dot_az(bm, dots):
         if dot.slp:
             plt.text(x + 20000, y + 20000, str(dot.slp), fontsize=12, color=color)
 
-def get_cis_property_view_month(date_start, date_end, cur):
-    """
-        A function that uses an SQL query to get data from a table of cyclone movement points
-
-        Args:
-            date_start: start date of cyclone movement points.
-            date_end: end date of cyclone movement points.
-            cur: cursor.
-
-        Returns:
-            DataFrame of cyclone movement points.
-
-    """
-    # command = f"SELECT ST_X(coord), ST_Y(coord), cic_type_id, * FROM ciclones.cic_property_view_mon WHERE max_datetime >= '{date_start}' AND max_datetime <= '{date_end}' AND \"name\" LIKE 'NARI (2505)' order by cic_id, datetime;"
-    command = \
-        (f"SELECT ST_X(coord), ST_Y(coord), cic_type_id, * FROM ciclones.cic_property_view_mon WHERE "
-         f"max_datetime >= '{date_start}' AND max_datetime <= '{date_end}' order by cic_id, datetime;")
-    cur.execute(command)
-    view_mon_rows = cur.fetchall()
-    return view_mon_rows
-
-def get_cis_track_view_month(date_start, date_end, cur):
-    """
-        A function that uses an SQL query to get data from a table of cyclone movement tracks
-
-        Args:
-            date_start: start date of cyclone movement tracks.
-            date_end: end date of cyclone movement tracks.
-            cur: cursor.
-
-        Returns:
-            DataFrame of cyclone movement tracks.
-
-    """
-    # command = f"SELECT ST_AsText(track), cic_type_id, * FROM ciclones.cic_track_view_gs_full WHERE max_datetime >= '{date_start}' AND max_datetime <= '{date_end}' AND \"name\" LIKE 'NARI (2505)' order by cic_id, max_datetime;"
-    command = \
-        (f"SELECT ST_AsText(track), cic_type_id, * FROM ciclones.cic_track_view_gs_full WHERE "
-         f"max_datetime >= '{date_start}' AND max_datetime <= '{date_end}' order by cic_id, max_datetime;")
-    cur.execute(command)
-    track_view_rows = cur.fetchall()
-    return track_view_rows
-
 def csv_gen(filename, csv_row): #id, datetime, lat, lon, slp
     """
         Function for generating CSV-file
@@ -367,152 +282,36 @@ def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, i
     bm.drawmeridians(np.arange(-180., 181., 5.), labels=[False,True,False,True])
     bm.drawcoastlines()
 
-    # Считываем параметры БД
-    with open('confing.conf', 'r') as f:
-        db_conf = f.read().splitlines()
+    # Historical config filename and lookup are preserved.
+    config = load_config("confing.conf")
+    start_date, end_date = calculate_period(start_date, period)
 
-    DB_HOST = ""
-    DB_PORT = ""
-    DB_NAME = ""
-    DB_USER = ""
-    DB_PASSWORD = ""
-    SMB_HOST = ""
-    SMB_USERNAME = ""
-    SMB_PASSWORD = ""
-    SMB_SHARE = ""
-    for row in db_conf:
-        if DB_HOST == "":
-            DB_HOST = row
-            continue
-        if DB_PORT == "":
-            DB_PORT = row
-            continue
-        if DB_NAME == "":
-            DB_NAME = row
-            continue
-        if DB_USER == "":
-            DB_USER = row
-            continue
-        if DB_PASSWORD == "":
-            DB_PASSWORD = row
-            continue
-        if SMB_HOST == "":
-            SMB_HOST = row
-            continue
-        if SMB_USERNAME == "":
-            SMB_USERNAME = row
-            continue
-        if SMB_PASSWORD == "":
-            SMB_PASSWORD = row
-            continue
-        if SMB_SHARE == "":
-            SMB_SHARE = row
-            break
-
-    # Подключение к базе данных
     conn = psycopg2.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        database=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD
+        host=config.db_host,
+        port=config.db_port,
+        database=config.db_name,
+        user=config.db_user,
+        password=config.db_password,
     )
+    try:
+        view_mon_rows, track_view_rows = load_source_rows(conn, start_date, end_date)
+    finally:
+        conn.close()
 
-    # Создаем курсор для выполнения запросов
-    cur = conn.cursor()
-
-    end_date = None
-    start_date = datetime.strptime(start_date, "%Y-%m-%d")
-    if period == 0:
-        end_date = start_date + relativedelta(months=1)
-    elif period == -1:
-        if start_date.day >= 21:
-            end_date = start_date + relativedelta(months=1) - timedelta(days=start_date.day)
-        else:
-            end_date = start_date + timedelta(days=10)
-    else:
-        end_date = start_date + timedelta(days=period)
-    # формируем и заранее создаем необходимые списки
-    view_mon_rows = get_cis_property_view_month(start_date, end_date, cur)
-    track_view_rows = get_cis_track_view_month(start_date, end_date, cur)
-
-    track_view_tc = []
-    track_view_zn = []
-    track_view_az = []
-
-    mon_view_tc = []
-    mon_view_zn = []
-    mon_view_az = []
-
-    csv_dot_tc = []
-    csv_dot_zn = []
-    csv_dot_az = []
-
-    # формируем списки линий по типам циклонов
-    for track in track_view_rows:
-        track_type = track[1]
-        track_id = ""
-        if is_track_name:
-            track_id = str(track[2])[-2:]
-        row = track[0]
-        # Проверяем нужны ли подписи имен линий и если нужны передаем и их
-        if is_track_name:
-            if track[3] != None:
-                name = track[3]
-            else:
-                name = ""
-            element = TrackRow(row, name, track_id)
-        else:
-            element = TrackRow(row, "", track_id)
-
-        if track_type == 1:
-            if cys_type_tc:
-                if row is None:
-                    continue
-                track_view_tc.append(element)
-        if track_type == 3:
-            if cys_type_zn:
-                if row is None:
-                    continue
-                track_view_zn.append(element)
-        if track_type == 4:
-            if cys_type_az:
-                if row is None:
-                    continue
-                track_view_az.append(element)
-
-    # формируем списки точек по типам циклонов
-    for dot in view_mon_rows:
-        vm_lons = dot[0]
-        vm_lats = dot[1]
-        dt = int(datetime.strftime(dot[15], "%H"))
-        datetime_dot = dot[15]
-        dot_type = dot[2]
-        track_id = str(dot[4])[-2:]
-        # Проверяем нужно ли подписать давление и если нужно то передаем его значение по условию
-        dot_slp = ""
-        if dt == 0 and is_slp:
-            dot_slp = dot[18]
-
-        dot_id = None
-        if dot[13]:
-            dot_id = dot[13]
-
-        element = DotRow(vm_lons, vm_lats, dot_id, dot_slp, datetime_dot)
-        dot_slp = dot[18]
-        csv_element = CSVRow(track_id, datetime_dot, vm_lons, vm_lats, dot_slp)
-        if cys_type_tc:
-            if dot_type == 1:
-                mon_view_tc.append(element)
-                csv_dot_tc.append(csv_element)
-        if cys_type_zn:
-            if dot_type == 3:
-                mon_view_zn.append(element)
-                csv_dot_zn.append(csv_element)
-        if cys_type_az:
-            if dot_type == 4:
-                mon_view_az.append(element)
-                csv_dot_az.append(csv_element)
+    prepared = prepare_rows(
+        track_view_rows, view_mon_rows,
+        cys_type_zn, cys_type_az, cys_type_tc,
+        is_slp, is_track_name,
+    )
+    track_view_tc = prepared.track_view_tc
+    track_view_zn = prepared.track_view_zn
+    track_view_az = prepared.track_view_az
+    mon_view_tc = prepared.mon_view_tc
+    mon_view_zn = prepared.mon_view_zn
+    mon_view_az = prepared.mon_view_az
+    csv_dot_tc = prepared.csv_dot_tc
+    csv_dot_zn = prepared.csv_dot_zn
+    csv_dot_az = prepared.csv_dot_az
 
     # построение линий
     track_tc(bm, track_view_tc, mon_view_tc)
@@ -590,25 +389,21 @@ def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, i
     if is_save_fig: plt.savefig(filepath, bbox_inches='tight', pad_inches=0.1)
     plt.close()
 
-    if is_smb and is_save_fig: upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
+    if is_smb and is_save_fig: upload_file_to_smb(config.smb_host, config.smb_username, config.smb_password, config.smb_share,
         filepath, str(datetime.strftime(start_date, "%Y.%m")))
-
-    # Закрываем соединение
-    cur.close()
-    conn.close()
 
     # написание csv файлов
     if is_save_csv and cys_type_az:
         csv_gen(f"{csv_filepath}AZ.csv", csv_dot_az)
-        if is_smb and is_save_fig: upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
+        if is_smb and is_save_fig: upload_file_to_smb(config.smb_host, config.smb_username, config.smb_password, config.smb_share,
                            f"{csv_filepath}AZ.csv", str(datetime.strftime(start_date, "%Y.%m")))
     if is_save_csv and cys_type_zn:
         csv_gen(f"{csv_filepath}ZN.csv", csv_dot_zn)
-        if is_smb and is_save_fig: upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
+        if is_smb and is_save_fig: upload_file_to_smb(config.smb_host, config.smb_username, config.smb_password, config.smb_share,
                            f"{csv_filepath}ZN.csv", str(datetime.strftime(start_date, "%Y.%m")))
     if is_save_csv and cys_type_tc:
         csv_gen(f"{csv_filepath}TC.csv", csv_dot_tc)
-        if is_smb and is_save_fig: upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
+        if is_smb and is_save_fig: upload_file_to_smb(config.smb_host, config.smb_username, config.smb_password, config.smb_share,
                            f"{csv_filepath}TC.csv", str(datetime.strftime(start_date, "%Y.%m")))
 
 # 1 - тропический циклон TC
