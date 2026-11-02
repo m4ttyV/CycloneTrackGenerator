@@ -176,15 +176,15 @@ def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, i
 
     # написание csv файлов
     if is_save_csv and cys_type_az:
-        csv_gen(f"{csv_filepath}AZ.csv", csv_dot_az)
+        csv_gen(f"{csv_filepath}AZ.csv", prepared.csv_dot_az)
         if is_smb and is_save_fig: upload_file_to_smb(config.smb_host, config.smb_username, config.smb_password, config.smb_share,
                            f"{csv_filepath}AZ.csv", str(datetime.strftime(start_date, "%Y.%m")))
     if is_save_csv and cys_type_zn:
-        csv_gen(f"{csv_filepath}ZN.csv", csv_dot_zn)
+        csv_gen(f"{csv_filepath}ZN.csv", prepared.csv_dot_zn)
         if is_smb and is_save_fig: upload_file_to_smb(config.smb_host, config.smb_username, config.smb_password, config.smb_share,
                            f"{csv_filepath}ZN.csv", str(datetime.strftime(start_date, "%Y.%m")))
     if is_save_csv and cys_type_tc:
-        csv_gen(f"{csv_filepath}TC.csv", csv_dot_tc)
+        csv_gen(f"{csv_filepath}TC.csv", prepared.csv_dot_tc)
         if is_smb and is_save_fig: upload_file_to_smb(config.smb_host, config.smb_username, config.smb_password, config.smb_share,
                            f"{csv_filepath}TC.csv", str(datetime.strftime(start_date, "%Y.%m")))
 
