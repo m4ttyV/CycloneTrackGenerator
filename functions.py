@@ -326,7 +326,7 @@ def csv_gen(filename, csv_row): #id, datetime, lat, lon, slp
 
 
 def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, is_slp,
-         is_track_name, blanc_type, is_smb, is_save_fig):  # Циклон, Антициклон, Тропический циклон
+         is_track_name, blanc_type, is_smb, is_save_fig, is_save_csv=True):  # Циклон, Антициклон, Тропический циклон
     """
         Main function.
         Args:
@@ -339,6 +339,7 @@ def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, i
             is_slp: type "True" if you need to plot pressure of cyclone movement points basemap or "False" otherwise.
             is_track_name: type "True" if you need to plot names of tracks on basemap or "False" otherwise.
             blanc_type: "None" for cyclones or anticyclones and "TC" for tropical cyclones.
+            is_save_csv: whether CSV datasets should be written (defaults to True for CLI compatibility).
     """
     save_dir = save_path.rsplit('/', 1)[0]
     try:
@@ -597,15 +598,15 @@ def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, i
     conn.close()
 
     # написание csv файлов
-    if cys_type_az:
+    if is_save_csv and cys_type_az:
         csv_gen(f"{csv_filepath}AZ.csv", csv_dot_az)
         if is_smb and is_save_fig: upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
                            f"{csv_filepath}AZ.csv", str(datetime.strftime(start_date, "%Y.%m")))
-    if cys_type_zn:
+    if is_save_csv and cys_type_zn:
         csv_gen(f"{csv_filepath}ZN.csv", csv_dot_zn)
         if is_smb and is_save_fig: upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
                            f"{csv_filepath}ZN.csv", str(datetime.strftime(start_date, "%Y.%m")))
-    if cys_type_tc:
+    if is_save_csv and cys_type_tc:
         csv_gen(f"{csv_filepath}TC.csv", csv_dot_tc)
         if is_smb and is_save_fig: upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
                            f"{csv_filepath}TC.csv", str(datetime.strftime(start_date, "%Y.%m")))
