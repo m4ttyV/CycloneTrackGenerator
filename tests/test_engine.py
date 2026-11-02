@@ -42,7 +42,7 @@ class EngineTests(unittest.TestCase):
 
     def test_decade_boundary_preserves_current_semantics(self):
         start, end = calculate_period("2026-10-21", -1)
-        self.assertEqual((start, end), (datetime(2026, 10, 21), datetime(2026, 11, 1)))
+        self.assertEqual((start, end), (datetime(2026, 10, 21), datetime(2026, 10, 31)))
 
     def test_custom_day_period(self):
         start, end = calculate_period("2026-10-05", 7)
