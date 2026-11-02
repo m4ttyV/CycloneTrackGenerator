@@ -41,7 +41,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--pathtosave", "-pts",
         required=False,
-        default="D:/tmp/test2506/",
+        default="./output",
         help="Путь куда сохранять"
     )
     parser.add_argument(
