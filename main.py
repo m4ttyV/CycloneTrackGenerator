@@ -70,6 +70,11 @@ if __name__ == "__main__":
         action='store_true',
         help='Нужна ли запись на smb'
     )
+    parser.add_argument(
+        '-sf', '--save_fig',
+        action='store_true',
+        help='Нужно ли сохранять изображения'
+    )
     # Передаем аргументы
     args = parser.parse_args()
     cis_type_zn = True
@@ -93,7 +98,6 @@ if __name__ == "__main__":
 
     if args.track_name == 0:
         is_track_name = False
-    print(args.samba_store)
 
-    main(cis_type_zn, cis_type_az, cis_type_tc, args.startdate, args.period, args.pathtosave, is_slp, is_track_name, blanc_type, is_smb=args.samba_store)
+    main(cis_type_zn, cis_type_az, cis_type_tc, args.startdate, args.period, args.pathtosave, is_slp, is_track_name, blanc_type, is_smb=args.samba_store, is_save_fig=args.save_fig)
 

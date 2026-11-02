@@ -326,7 +326,7 @@ def csv_gen(filename, csv_row): #id, datetime, lat, lon, slp
 
 
 def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, is_slp,
-         is_track_name, blanc_type, is_smb):  # Циклон, Антициклон, Тропический циклон
+         is_track_name, blanc_type, is_smb, is_save_fig):  # Циклон, Антициклон, Тропический циклон
     """
         Main function.
         Args:
@@ -586,7 +586,7 @@ def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, i
 
 
     # сохраняем файл
-    plt.savefig(filepath, bbox_inches='tight', pad_inches=0.1)
+    if is_save_fig: plt.savefig(filepath, bbox_inches='tight', pad_inches=0.1)
     plt.close()
 
     if is_smb: upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
