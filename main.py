@@ -65,6 +65,11 @@ if __name__ == "__main__":
         default="None",
         help="Тип бланка"
     )
+    parser.add_argument(
+        '-smb', '--samba_store',
+        action='store_true',
+        help='Нужна ли запись на smb'
+    )
     # Передаем аргументы
     args = parser.parse_args()
     cis_type_zn = True
@@ -88,6 +93,7 @@ if __name__ == "__main__":
 
     if args.track_name == 0:
         is_track_name = False
+    print(args.samba_store)
 
-    main(cis_type_zn, cis_type_az, cis_type_tc, args.startdate, args.period, args.pathtosave, is_slp, is_track_name, blanc_type)
+    main(cis_type_zn, cis_type_az, cis_type_tc, args.startdate, args.period, args.pathtosave, is_slp, is_track_name, blanc_type, is_smb=args.samba_store)
 
