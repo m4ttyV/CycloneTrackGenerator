@@ -1,8 +1,8 @@
-from functions import main
+from functions import *
 import argparse
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate cyclone, anticyclone and tropical cyclone track maps from PostgreSQL data.")
+    parser = argparse.ArgumentParser(description="Программа для анализа данных скорости ветра в файлах NetCDF.")
     parser.add_argument(
         "--startdate", "-sd",
         required=False,
@@ -88,24 +88,6 @@ if __name__ == "__main__":
 
     if args.track_name == 0:
         is_track_name = False
-    # Эта шляпа нужна для прогонки по конкретному месяцу(ем)
-    # Циклоны и антициклоны
-    # for month in [8]:
-    #     for dec in [0,1,2]:
-    #         dt = datetime(2025, month=month, day=dec * 10 + 1)
-    #
-    #         print(dt)
-    #         main(True, True, False, dt.strftime('%Y-%m-%d'), 1, f'D:/tmp/test1508/results/{month:02d}/{dec + 1}/ZN_AZ_m{month:02d}_d{dec + 1}', False, True, "None")
-    #         main(False, True, False, dt.strftime('%Y-%m-%d'), 1, f'D:/tmp/test1508/results/{month:02d}/{dec + 1}/AZ_m{month:02d}_d{dec + 1}', False, True, "None")
-    #         main(True, False, False, dt.strftime('%Y-%m-%d'), 1, f'D:/tmp/test1508/results/{month:02d}/{dec + 1}/ZN_m{month:02d}_d{dec + 1}', False, True, "None")
-    #
-    #     dt = datetime(2025, month=month, day=1)
-    #     print(dt)
-    #     main(True, True, False, dt.strftime('%Y-%m-%d'), 0, f'D:/tmp/test1508/results/{month:02d}/ZN_AZ_m{month:02d}_', False, True, "None")
-    #     main(False, True, False, dt.strftime('%Y-%m-%d'), 0, f'D:/tmp/test1508/results/{month:02d}/AZ_m{month:02d}_', False, True, "None")
-    #     main(True, False, False, dt.strftime('%Y-%m-%d'), 0, f'D:/tmp/test1508/results/{month:02d}/ZN_m{month:02d}_', False, True, "None")
-    #     # Тропики
-    #     main(False, False, True, dt.strftime('%Y-%m-%d'), 0, f'D:/tmp/test1508/results/{month:02d}/TC_m{month:02d}_', False, True, "TC")
 
     main(cis_type_zn, cis_type_az, cis_type_tc, args.startdate, args.period, args.pathtosave, is_slp, is_track_name, blanc_type)
 

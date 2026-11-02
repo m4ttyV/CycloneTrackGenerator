@@ -1,3 +1,4 @@
+import calendar
 import csv
 import smbclient
 import psycopg2
@@ -126,6 +127,7 @@ def upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE, local_fi
     except Exception as e:
         print(f"Ошибка при загрузке файла: {e}")
     print()
+    # pass
 
 def marker_type():
     """
@@ -147,15 +149,15 @@ def stage_type_id_color(type_id):
     elif type_id == 6:
         return 'green'
     elif type_id == 7:
-        return 'orange'
-    elif type_id == 11:
         return 'purple'
+    elif type_id == 11:
+        return 'orange'
     elif type_id == 29:
         return 'brown'
 
 def track_tc(bm, tracks, DotRow):#1
     """
-        Plots tropical cyclone tracks on basemap.
+        Plots tropical cyc lone tracks on basemap.
         Args:
             bm: Basemap instance.
             tracks: Tropical cyclone dots tracks.
@@ -274,6 +276,7 @@ def get_cis_property_view_month(date_start, date_end, cur):
             DataFrame of cyclone movement points.
 
     """
+    # command = f"SELECT ST_X(coord), ST_Y(coord), cic_type_id, * FROM ciclones.cic_property_view_mon WHERE max_datetime >= '{date_start}' AND max_datetime <= '{date_end}' AND \"name\" LIKE 'NARI (2505)' order by cic_id, datetime;"
     command = f"SELECT ST_X(coord), ST_Y(coord), cic_type_id, * FROM ciclones.cic_property_view_mon WHERE max_datetime >= '{date_start}' AND max_datetime <= '{date_end}' order by cic_id, datetime;"
     cur.execute(command)
     view_mon_rows = cur.fetchall()
@@ -292,6 +295,7 @@ def get_cis_track_view_month(date_start, date_end, cur):
             DataFrame of cyclone movement tracks.
 
     """
+    # command = f"SELECT ST_AsText(track), cic_type_id, * FROM ciclones.cic_track_view_gs_full WHERE max_datetime >= '{date_start}' AND max_datetime <= '{date_end}' AND \"name\" LIKE 'NARI (2505)' order by cic_id, max_datetime;"
     command = f"SELECT ST_AsText(track), cic_type_id, * FROM ciclones.cic_track_view_gs_full WHERE max_datetime >= '{date_start}' AND max_datetime <= '{date_end}' order by cic_id, max_datetime;"
     cur.execute(command)
     track_view_rows = cur.fetchall()
@@ -324,8 +328,8 @@ def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, i
         Main function.
         Args:
             cys_type_zn: cyclone movement points.
-            cys_type_az: cyclone movement points.
-            cys_type_tc: cyclone movement tracks.
+            cys_type_az: anticyclone movement points.
+            cys_type_tc: tropical cyclone movement tracks.
             start_date: start date of cyclone movement points.
             period: period of cyclone movement points.
             save_path: path to save CSV file.
@@ -347,20 +351,20 @@ def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, i
     if blanc_type == "TC":
         bm = Basemap(projection='aeqd',  # Тропики
                      lon_0=140,
-                     lat_0=45,
+                     lat_0=38,
                      width=9000000,
-                     height=9000000,
+                     height=8000000,
                      resolution='i', area_thresh=1000.)
     else:
         bm = Basemap(projection='merc', llcrnrlat=20, urcrnrlat=65, \
                      llcrnrlon=105, urcrnrlon=190, lat_ts=20, resolution='i')
 
-    bm.drawparallels(np.arange(-80., 81., 5.))
-    bm.drawmeridians(np.arange(-180., 181., 5.))
+    bm.drawparallels(np.arange(-80., 81., 5.), labels=[True,False,True,False])
+    bm.drawmeridians(np.arange(-180., 181., 5.), labels=[False,True,False,True])
     bm.drawcoastlines()
 
     # Считываем параметры БД
-    with open('config.conf', 'r') as f:
+    with open('confing.conf', 'r') as f:
         db_conf = f.read().splitlines()
 
     DB_HOST = ""
@@ -417,27 +421,28 @@ def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, i
     start_date = datetime.strptime(start_date, "%Y-%m-%d")
     if period == 0:
         end_date = start_date + relativedelta(months=1)
-    else:
+    elif period == -1:
         if start_date.day >= 21:
             end_date = start_date + relativedelta(months=1) - timedelta(days=start_date.day)
         else:
             end_date = start_date + timedelta(days=10)
-
+    else:
+        end_date = start_date + timedelta(days=period)
     # формируем и заранее создаем необходимые списки
     view_mon_rows = get_cis_property_view_month(start_date, end_date, cur)
     track_view_rows = get_cis_track_view_month(start_date, end_date, cur)
 
-    track_view_tc = list()
-    track_view_zn = list()
-    track_view_az = list()
+    track_view_tc = []
+    track_view_zn = []
+    track_view_az = []
 
-    mon_view_tc = list()
-    mon_view_zn = list()
-    mon_view_az = list()
+    mon_view_tc = []
+    mon_view_zn = []
+    mon_view_az = []
 
-    csv_dot_tc = list()
-    csv_dot_zn = list()
-    csv_dot_az = list()
+    csv_dot_tc = []
+    csv_dot_zn = []
+    csv_dot_az = []
 
     # формируем списки линий по типам циклонов
     for track in track_view_rows:
@@ -520,8 +525,10 @@ def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, i
     filepath = save_path + file_date
     if period == 0:
         filepath = filepath + "_month_"
-    else:
+    elif period == -1:
         filepath = filepath + "_decade_"
+    else:
+        filepath = filepath + "_custom_"
     csv_filepath = filepath
     if cys_type_zn:
         filepath = filepath + "ZN"
@@ -533,7 +540,7 @@ def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, i
 
     # Легенда
     if blanc_type == "TC":
-        x, y = bm(55, 60)
+        x, y = bm(72, 57)
         bm.plot(x, y, marker='s', color="black", markersize=200, markeredgecolor="black",
                 markerfacecolor='white')
         x -= 700000
@@ -541,11 +548,11 @@ def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, i
         cis_subtype_name = {
             2: "T",
             6: "TD",
-            7: "TS",
-            11: "STS",
+            7: "STS",
+            11: "TS",
             29: "L"
         }
-        for color_id in [2, 6, 7, 11, 29]:
+        for color_id in [29, 6, 11, 7, 2]:
             bm.plot(x, y, marker='o', color="black", markersize=5, markeredgecolor=stage_type_id_color(color_id),
                     markerfacecolor='white')
             plt.text(x + 80000, y - 50000, cis_subtype_name[color_id], fontsize=12, weight="bold",
