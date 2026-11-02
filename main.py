@@ -75,6 +75,21 @@ if __name__ == "__main__":
         action='store_true',
         help='Нужно ли сохранять изображения'
     )
+    csv_group = parser.add_mutually_exclusive_group()
+    csv_group.add_argument(
+        "-sc", "--save_csv",
+        dest="save_csv",
+        action="store_true",
+        help="Сохранять CSV (по умолчанию)",
+    )
+    csv_group.add_argument(
+        "--no-save-csv",
+        dest="save_csv",
+        action="store_false",
+        help="Не создавать CSV-файлы",
+    )
+    parser.set_defaults(save_csv=True)
+
     # Передаем аргументы
     args = parser.parse_args()
     cis_type_zn = True
@@ -99,5 +114,5 @@ if __name__ == "__main__":
     if args.track_name == 0:
         is_track_name = False
 
-    main(cis_type_zn, cis_type_az, cis_type_tc, args.startdate, args.period, args.pathtosave, is_slp, is_track_name, blanc_type, is_smb=args.samba_store, is_save_fig=args.save_fig)
+    main(cis_type_zn, cis_type_az, cis_type_tc, args.startdate, args.period, args.pathtosave, is_slp, is_track_name, blanc_type, is_smb=args.samba_store, is_save_fig=args.save_fig, is_save_csv=args.save_csv)
 
