@@ -85,5 +85,32 @@ class EngineTests(unittest.TestCase):
             self.assertEqual(config.smb_share, "share")
 
 
+class RendererTests(unittest.TestCase):
+    def test_empty_map_preview_produces_png_and_closes_figure(self):
+        import matplotlib
+        matplotlib.use("Agg", force=True)
+        import matplotlib.pyplot as plt
+        from engine.models import PreparedRows
+        from engine.renderer import render_png_bytes
+
+        before = set(plt.get_fignums())
+        png = render_png_bytes(PreparedRows(), False, False, "None", dpi=45)
+        self.assertTrue(png.startswith(b"\\x89PNG\\r\\n\\x1a\\n"))
+        self.assertEqual(set(plt.get_fignums()), before)
+
+    def test_render_map_returns_owned_figure(self):
+        import matplotlib
+        matplotlib.use("Agg", force=True)
+        import matplotlib.pyplot as plt
+        from engine.models import PreparedRows
+        from engine.renderer import render_map
+
+        figure = render_map(PreparedRows(), False, False, "None")
+        try:
+            self.assertIn(figure.number, plt.get_fignums())
+        finally:
+            plt.close(figure)
+
+
 if __name__ == "__main__":
     unittest.main()
