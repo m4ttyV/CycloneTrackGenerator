@@ -220,7 +220,6 @@ def dot_tc(bm, dots):
             dots: Tropical cyclone dots.
     """
     for dot in dots:
-        # vm_lons, vm_lats, dot_id, dot_slp, dot_type_id = dot.split(' ') # x, y, подпись id, давление, тип точки
         color = stage_type_id_color(dot.type_id)
         x, y = bm(float(dot.lon), float(dot.lat))
         if dot.slp:
@@ -277,7 +276,9 @@ def get_cis_property_view_month(date_start, date_end, cur):
 
     """
     # command = f"SELECT ST_X(coord), ST_Y(coord), cic_type_id, * FROM ciclones.cic_property_view_mon WHERE max_datetime >= '{date_start}' AND max_datetime <= '{date_end}' AND \"name\" LIKE 'NARI (2505)' order by cic_id, datetime;"
-    command = f"SELECT ST_X(coord), ST_Y(coord), cic_type_id, * FROM ciclones.cic_property_view_mon WHERE max_datetime >= '{date_start}' AND max_datetime <= '{date_end}' order by cic_id, datetime;"
+    command = \
+        (f"SELECT ST_X(coord), ST_Y(coord), cic_type_id, * FROM ciclones.cic_property_view_mon WHERE "
+         f"max_datetime >= '{date_start}' AND max_datetime <= '{date_end}' order by cic_id, datetime;")
     cur.execute(command)
     view_mon_rows = cur.fetchall()
     return view_mon_rows
@@ -296,7 +297,9 @@ def get_cis_track_view_month(date_start, date_end, cur):
 
     """
     # command = f"SELECT ST_AsText(track), cic_type_id, * FROM ciclones.cic_track_view_gs_full WHERE max_datetime >= '{date_start}' AND max_datetime <= '{date_end}' AND \"name\" LIKE 'NARI (2505)' order by cic_id, max_datetime;"
-    command = f"SELECT ST_AsText(track), cic_type_id, * FROM ciclones.cic_track_view_gs_full WHERE max_datetime >= '{date_start}' AND max_datetime <= '{date_end}' order by cic_id, max_datetime;"
+    command = \
+        (f"SELECT ST_AsText(track), cic_type_id, * FROM ciclones.cic_track_view_gs_full WHERE "
+         f"max_datetime >= '{date_start}' AND max_datetime <= '{date_end}' order by cic_id, max_datetime;")
     cur.execute(command)
     track_view_rows = cur.fetchall()
     return track_view_rows
@@ -323,7 +326,7 @@ def csv_gen(filename, csv_row): #id, datetime, lat, lon, slp
 
 
 def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, is_slp,
-         is_track_name, blanc_type):  # Циклон, Антициклон, Тропический циклон
+         is_track_name, blanc_type, is_smb):  # Циклон, Антициклон, Тропический циклон
     """
         Main function.
         Args:
@@ -582,12 +585,11 @@ def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, i
         plt.text(x + 300000, y + 120000, "Антициклоны", fontsize=12, weight="bold", color="black")
 
 
-
-
     # сохраняем файл
     plt.savefig(filepath, bbox_inches='tight', pad_inches=0.1)
     plt.close()
-    upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
+
+    if is_smb: upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
         filepath, str(datetime.strftime(start_date, "%Y.%m")))
 
     # Закрываем соединение
@@ -597,15 +599,15 @@ def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, i
     # написание csv файлов
     if cys_type_az:
         csv_gen(f"{csv_filepath}AZ.csv", csv_dot_az)
-        upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
+        if is_smb: upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
                            f"{csv_filepath}AZ.csv", str(datetime.strftime(start_date, "%Y.%m")))
     if cys_type_zn:
         csv_gen(f"{csv_filepath}ZN.csv", csv_dot_zn)
-        upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
+        if is_smb: upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
                            f"{csv_filepath}ZN.csv", str(datetime.strftime(start_date, "%Y.%m")))
     if cys_type_tc:
         csv_gen(f"{csv_filepath}TC.csv", csv_dot_tc)
-        upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
+        if is_smb: upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
                            f"{csv_filepath}TC.csv", str(datetime.strftime(start_date, "%Y.%m")))
 
 # 1 - тропический циклон TC
