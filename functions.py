@@ -589,7 +589,7 @@ def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, i
     if is_save_fig: plt.savefig(filepath, bbox_inches='tight', pad_inches=0.1)
     plt.close()
 
-    if is_smb: upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
+    if is_smb and is_save_fig: upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
         filepath, str(datetime.strftime(start_date, "%Y.%m")))
 
     # Закрываем соединение
@@ -599,15 +599,15 @@ def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, i
     # написание csv файлов
     if cys_type_az:
         csv_gen(f"{csv_filepath}AZ.csv", csv_dot_az)
-        if is_smb: upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
+        if is_smb and is_save_fig: upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
                            f"{csv_filepath}AZ.csv", str(datetime.strftime(start_date, "%Y.%m")))
     if cys_type_zn:
         csv_gen(f"{csv_filepath}ZN.csv", csv_dot_zn)
-        if is_smb: upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
+        if is_smb and is_save_fig: upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
                            f"{csv_filepath}ZN.csv", str(datetime.strftime(start_date, "%Y.%m")))
     if cys_type_tc:
         csv_gen(f"{csv_filepath}TC.csv", csv_dot_tc)
-        if is_smb: upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
+        if is_smb and is_save_fig: upload_file_to_smb(SMB_HOST, SMB_USERNAME, SMB_PASSWORD, SMB_SHARE,
                            f"{csv_filepath}TC.csv", str(datetime.strftime(start_date, "%Y.%m")))
 
 # 1 - тропический циклон TC
