@@ -1,4 +1,4 @@
-from functions import *
+from functions import main
 import argparse
 
 if __name__ == "__main__":
@@ -55,24 +55,28 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--blanc_type_TC", "-bt",
-        action='store_true',
+        dest="blanc_type_tc",
+        action="store_true",
         default=False,
         help="Тип бланка"
     )
     parser.add_argument(
         '--no_samba_store',
+        dest="samba_store",
         action='store_false',
         default=False,
         help='Отключить запись на smb'
     )
     parser.add_argument(
         '--no_save_fig',
+        dest="save_fig",
         action='store_false',
         default=False,
         help='Не сохранять изображения'
     )
     parser.add_argument(
         "--no_save_csv",
+        dest="save_csv",
         action="store_false",
         default=True,
         help="Не создавать CSV-файлы",
@@ -81,6 +85,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     main(args.cyclone, args.anticyclone, args.tropicalcyclone, args.startdate, args.period, args.pathtosave,
-         args.dots_slp, args.track_name, args.blanc_type, is_smb=args.samba_store, is_save_fig=args.save_fig,
-         is_save_csv=args.no_save_csv)
+         args.dots_slp, args.track_name, "TC" if args.blanc_type_tc else "None",
+         is_smb=args.samba_store, is_save_fig=args.save_fig, is_save_csv=args.save_csv)
 
