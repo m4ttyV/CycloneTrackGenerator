@@ -64,14 +64,14 @@ if __name__ == "__main__":
         '--no_samba_store',
         dest="samba_store",
         action='store_false',
-        default=False,
+        default=True,
         help='Отключить запись на smb'
     )
     parser.add_argument(
         '--no_save_fig',
         dest="save_fig",
         action='store_false',
-        default=False,
+        default=True,
         help='Не сохранять изображения'
     )
     parser.add_argument(
