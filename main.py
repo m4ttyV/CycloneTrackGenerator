@@ -14,29 +14,26 @@ if __name__ == "__main__":
         "--period", "-p",
         required=False,
         default=0,
-        help="Тип периода (0 - месяц, 1 - декада",
+        help="Тип периода (0 - месяц, -1 - декада, любое положительное число - период в днях",
         type=int
     )
     parser.add_argument(
         "--cyclone", "-zn",
-        required=False,
-        type=int,
-        default=1,
-        help="Нужен ли циклон (1 или 0)",
+        action="store_true",
+        default=False,
+        help="Нужен ли циклон",
     )
     parser.add_argument(
         "--anticyclone", "-az",
-        required=False,
-        type = int,
-        default=1,
-        help="Нужен ли антициклон (1 или 0)"
+        action="store_true",
+        default=False,
+        help="Нужен ли антициклон"
     )
     parser.add_argument(
         "--tropicalcyclone", "-tc",
-        required=False,
-        type=int,
-        default=0,
-        help="Нужен ли тропический циклон (1 или 0)"
+        action="store_true",
+        default=False,
+        help="Нужен ли тропический циклон"
     )
     parser.add_argument(
         "--pathtosave", "-pts",
@@ -46,73 +43,44 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dots_slp", "-slp",
-        required=False,
-        type=float,
-        default=0,
+        action='store_true',
+        default=False,
         help="Нужно ли давление точек"
     )
     parser.add_argument(
         "--track_name", "-tn",
-        required=False,
-        type=int,
-        default=1,
+        action='store_true',
+        default=False,
         help="Нужны ли имена линий"
     )
     parser.add_argument(
-        "--blanc_type", "-bt",
-        required=False,
-        type=str,
-        default="None",
+        "--blanc_type_TC", "-bt",
+        action='store_true',
+        default=False,
         help="Тип бланка"
     )
     parser.add_argument(
-        '-smb', '--samba_store',
-        action='store_true',
-        help='Нужна ли запись на smb'
+        '--no_samba_store',
+        action='store_false',
+        default=False,
+        help='Отключить запись на smb'
     )
     parser.add_argument(
-        '-sf', '--save_fig',
-        action='store_true',
-        help='Нужно ли сохранять изображения'
+        '--no_save_fig',
+        action='store_false',
+        default=False,
+        help='Не сохранять изображения'
     )
-    csv_group = parser.add_mutually_exclusive_group()
-    csv_group.add_argument(
-        "-sc", "--save_csv",
-        dest="save_csv",
-        action="store_true",
-        help="Сохранять CSV (по умолчанию)",
-    )
-    csv_group.add_argument(
-        "--no-save-csv",
-        dest="save_csv",
+    parser.add_argument(
+        "--no_save_csv",
         action="store_false",
+        default=True,
         help="Не создавать CSV-файлы",
     )
     parser.set_defaults(save_csv=True)
 
-    # Передаем аргументы
     args = parser.parse_args()
-    cis_type_zn = True
-    cis_type_az = True
-    cis_type_tc = True
-    is_slp = True
-    is_track_name = True
-    blanc_type = args.blanc_type
-
-    if args.cyclone == 0:
-        cis_type_zn = False
-
-    if args.anticyclone == 0:
-        cis_type_az = False
-
-    if args.tropicalcyclone == 0: 
-        cis_type_tc = False
-
-    if args.dots_slp == 0:
-        is_slp = False
-
-    if args.track_name == 0:
-        is_track_name = False
-
-    main(cis_type_zn, cis_type_az, cis_type_tc, args.startdate, args.period, args.pathtosave, is_slp, is_track_name, blanc_type, is_smb=args.samba_store, is_save_fig=args.save_fig, is_save_csv=args.save_csv)
+    main(args.cyclone, args.anticyclone, args.tropicalcyclone, args.startdate, args.period, args.pathtosave,
+         args.dots_slp, args.track_name, args.blanc_type, is_smb=args.samba_store, is_save_fig=args.save_fig,
+         is_save_csv=args.no_save_csv)
 
