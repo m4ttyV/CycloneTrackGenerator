@@ -95,7 +95,7 @@ class RendererTests(unittest.TestCase):
 
         before = set(plt.get_fignums())
         png = render_png_bytes(PreparedRows(), False, False, "None", dpi=45)
-        self.assertTrue(png.startswith(b"\\x89PNG\\r\\n\\x1a\\n"))
+        self.assertEqual(png[:8], bytes([137, 80, 78, 71, 13, 10, 26, 10]))
         self.assertEqual(set(plt.get_fignums()), before)
 
     def test_render_map_returns_owned_figure(self):
