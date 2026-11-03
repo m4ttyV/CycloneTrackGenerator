@@ -136,7 +136,12 @@ def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, i
         password=config.db_password,
     )
     try:
-        if selected_cic_ids is None:\n            view_mon_rows, track_view_rows = load_source_rows(conn, start_date, end_date)\n        else:\n            view_mon_rows, track_view_rows = load_source_rows(\n                conn, start_date, end_date, selected_cic_ids=selected_cic_ids\n            )
+        if selected_cic_ids is None:
+            view_mon_rows, track_view_rows = load_source_rows(conn, start_date, end_date)
+        else:
+            view_mon_rows, track_view_rows = load_source_rows(
+                conn, start_date, end_date, selected_cic_ids=selected_cic_ids
+            )
     finally:
         conn.close()
 
