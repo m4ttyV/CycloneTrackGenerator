@@ -9,8 +9,11 @@ import base64
 from contextlib import redirect_stdout
 from datetime import datetime
 import json
+import os
 import sys
 import traceback
+
+os.environ.setdefault("MPLBACKEND", "Agg")
 
 from engine.catalog import list_cyclones
 from engine.config import load_config
