@@ -109,7 +109,8 @@ class FilterTests(unittest.TestCase):
             smb_host="", smb_username="", smb_password="", smb_share="",
         )
         from engine.models import PreparedRows
-        with tempfile.TemporaryDirectory() as directory, (\n            patch.object(functions, "load_config", return_value=config),
+        with tempfile.TemporaryDirectory() as directory, (\
+            patch.object(functions, "load_config", return_value=config),
             patch.object(functions.psycopg2, "connect", return_value=MagicMock()),
             patch.object(functions, "load_source_rows", return_value=([], [])) as loader,
             patch.object(functions, "prepare_rows", return_value=PreparedRows()),
