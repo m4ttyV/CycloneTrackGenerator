@@ -103,7 +103,7 @@ def csv_gen(filename, csv_row): #id, datetime, lat, lon, slp
 
 
 def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, is_slp,
-         is_track_name, blanc_type, is_smb, is_save_fig, is_save_csv=True):  # Циклон, Антициклон, Тропический циклон
+         is_track_name, blanc_type, is_smb, is_save_fig, is_save_csv=True, selected_cic_ids=None):  # Циклон, Антициклон, Тропический циклон
     """
         Main function.
         Args:
@@ -116,7 +116,7 @@ def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, i
             is_slp: type "True" if you need to plot pressure of cyclone movement points basemap or "False" otherwise.
             is_track_name: type "True" if you need to plot names of tracks on basemap or "False" otherwise.
             blanc_type: "None" for cyclones or anticyclones and "TC" for tropical cyclones.
-            is_save_csv: whether CSV datasets should be written (defaults to True for CLI compatibility).
+            is_save_csv: whether CSV datasets should be written (defaults to True for CLI compatibility).\n            selected_cic_ids: optional full IDs; None preserves unfiltered generation.
     """
     save_dir = save_path.rsplit('/', 1)[0]
     try:
@@ -136,7 +136,7 @@ def main(cys_type_zn, cys_type_az, cys_type_tc, start_date, period, save_path, i
         password=config.db_password,
     )
     try:
-        view_mon_rows, track_view_rows = load_source_rows(conn, start_date, end_date)
+        if selected_cic_ids is None:\n            view_mon_rows, track_view_rows = load_source_rows(conn, start_date, end_date)\n        else:\n            view_mon_rows, track_view_rows = load_source_rows(\n                conn, start_date, end_date, selected_cic_ids=selected_cic_ids\n            )
     finally:
         conn.close()
 
