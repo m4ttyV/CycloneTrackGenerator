@@ -1,6 +1,8 @@
 """Integration tests for catalog and ID filters without a live PostgreSQL server."""
 
 import unittest
+import tempfile
+from pathlib import Path
 from datetime import datetime
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -107,19 +109,19 @@ class FilterTests(unittest.TestCase):
             smb_host="", smb_username="", smb_password="", smb_share="",
         )
         from engine.models import PreparedRows
-        with (
-            patch.object(functions, "load_config", return_value=config),
+        with tempfile.TemporaryDirectory() as directory, (\n            patch.object(functions, "load_config", return_value=config),
             patch.object(functions.psycopg2, "connect", return_value=MagicMock()),
             patch.object(functions, "load_source_rows", return_value=([], [])) as loader,
             patch.object(functions, "prepare_rows", return_value=PreparedRows()),
             patch.object(functions, "render_map", return_value=MagicMock()),
         ):
-            functions.main(False, False, False, "2026-10-01", 0, "./output/",
+            prefix = str(Path(directory) / "cyclone_")
+            functions.main(False, False, False, "2026-10-01", 0, prefix,
                            False, False, "None", False, False,
                            is_save_csv=False, selected_cic_ids=[12345])
             self.assertEqual(loader.call_args.kwargs["selected_cic_ids"], [12345])
             loader.reset_mock()
-            functions.main(False, False, False, "2026-10-01", 0, "./output/",
+            functions.main(False, False, False, "2026-10-01", 0, prefix,
                            False, False, "None", False, False, is_save_csv=False)
             self.assertNotIn("selected_cic_ids", loader.call_args.kwargs)
 
