@@ -51,3 +51,7 @@ Geographic visualization
              ▼
       Optional SMB upload
 ```
+
+## Windows EXE (PyInstaller)
+
+For a standalone Python engine that does not need Python/Conda installed on the target PC, see [Windows packaging instructions](docs/packaging-windows.md). The engine keeps the existing JSON protocol for the WinForms GUI. `confing.conf` must be supplied separately and is not bundled.
