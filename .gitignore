@@ -23,3 +23,8 @@ confing.conf
 # OS
 .DS_Store
 Thumbs.db
+
+# PyInstaller build outputs
+build/
+dist/
+*.spec.bak
