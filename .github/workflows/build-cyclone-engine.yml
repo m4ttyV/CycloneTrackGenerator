@@ -1,0 +1,53 @@
+name: Build CycloneEngine (Windows)
+
+on:
+  push:
+    branches:
+      - feature/pyinstaller-packaging
+  workflow_dispatch:
+
+jobs:
+  windows-engine:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          architecture: 'x64'
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install "pyinstaller>=6,<7"
+
+      - name: Compile source and run unit tests
+        shell: pwsh
+        run: |
+          python -m compileall -q main.py functions.py desktop_bridge.py engine tests
+          python -m unittest discover -s tests -v
+
+      - name: Package and test the EXE
+        shell: pwsh
+        run: |
+          .\scripts\build_engine.ps1 -Python python
+
+      - name: Zip distribution
+        shell: pwsh
+        run: |
+          Compress-Archive -Path ".\dist\CycloneEngine" -DestinationPath ".\dist\CycloneEngine-windows-x64.zip" -Force
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CycloneEngine-windows-x64
+          path: dist/CycloneEngine-windows-x64.zip
+          if-no-files-found: error
+          retention-days: 14
