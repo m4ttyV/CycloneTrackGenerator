@@ -192,18 +192,41 @@ def _generate(request):
     }
 
 
+def _self_test(request):
+    """Exercise native imports and Basemap rendering without credentials or DB."""
+    import psycopg2  # noqa: F401 - detect missing bundled native dependencies
+    import smbclient  # noqa: F401 - verify SMB client is included
+
+    from engine.renderer import render_png_bytes
+    from engine.models import PreparedRows
+
+    png = render_png_bytes(
+        PreparedRows(),
+        cys_type_zn=False,
+        cys_type_az=False,
+        blanc_type="None",
+        dpi=35,
+    )
+    if not png.startswith(bytes([137, 80, 78, 71, 13, 10, 26, 10])):
+        raise RuntimeError("Renderer did not return valid PNG bytes")
+
+    return {"status": "ok", "rendered_png_bytes": len(png)}
+
+
 def dispatch(request):
     """Return the action result. No protocol output is printed here."""
     if not isinstance(request, dict):
         raise ValueError("Request must be a JSON object")
     action = request.get("action")
+    if action == "self-test":
+        return _self_test(request)
     if action == "list-cyclones":
         return _catalog(request)
     if action == "preview":
         return _preview(request)
     if action == "generate":
         return _generate(request)
-    raise ValueError("Unknown action; expected list-cyclones, preview, or generate")
+    raise ValueError("Unknown action; expected self-test, list-cyclones, preview, or generate")
 
 
 def main():
