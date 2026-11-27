@@ -43,7 +43,7 @@ def stage_type_id_color(type_id):
     elif type_id == 29:
         return 'brown'
 
-def track_tc(bm, tracks, DotRow):#1
+def track_tc(bm, tracks, DotRow, hits=None):#1
     """
         Plots tropical cyc lone tracks on basemap.
         Args:
@@ -61,16 +61,19 @@ def track_tc(bm, tracks, DotRow):#1
             first_coord, second_coord = pair
             first_coord_lon, first_coord_lat = first_coord
             for dot in DotRow:
-                if dot.lon == first_coord_lon and dot.lat == first_coord_lat:
+                if (dot.cic_id == track.cic_id and dot.lon == first_coord_lon
+                        and dot.lat == first_coord_lat):
                     color = stage_type_id_color(dot.type_id)
                     lons, lats = zip(*list(pair))  # Разбираем координаты
                     x, y = bm(lons, lats)
-                    bm.plot(x, y, marker=None, color=color, linewidth=2)
+                    artists = bm.plot(x, y, marker=None, color=color, linewidth=2)
+                    if hits is not None:
+                        hits.append(('track', track.cic_id, track.cic_id, artists[0]))
                     if first_track_coord:
                         plt.text(x[0] - 300000, y[0] - 300000, str(track.name).replace(' (', '\n('), fontsize=12, weight = "bold", color=color)
                         first_track_coord = False
 
-def track_zn(bm, tracks):
+def track_zn(bm, tracks, hits=None):
     """
         Plots cyclone tracks on basemap.
         Args:
@@ -82,10 +85,12 @@ def track_zn(bm, tracks):
         lons, lats = zip(*list(line.coords))  # Разбираем координаты
         x, y = bm(lons, lats)
         color = 'darkblue'
-        bm.plot(x, y, marker=None, color=color, linewidth=2)
+        artists = bm.plot(x, y, marker=None, color=color, linewidth=2)
+        if hits is not None:
+            hits.append(('track', track.cic_id, track.cic_id, artists[0]))
         plt.text(x[0] + 20000, y[0] + 20000, str(track.id).replace(' (', '\n('), fontsize=20, weight = "bold", color=color)
 
-def track_az(bm, tracks):
+def track_az(bm, tracks, hits=None):
     """
         Plots anticyclones tracks on basemap.
         Args:
@@ -97,10 +102,12 @@ def track_az(bm, tracks):
         lons, lats = zip(*list(line.coords))  # Разбираем координаты
         x, y = bm(lons, lats)
         color = 'red'
-        bm.plot(x, y, marker=None, color=color, linewidth=2)
+        artists = bm.plot(x, y, marker=None, color=color, linewidth=2)
+        if hits is not None:
+            hits.append(('track', track.cic_id, track.cic_id, artists[0]))
         plt.text(x[0] + 20000, y[0] + 20000, str(track.id).replace(' (', '\n('), fontsize=20, weight = "bold", color=color)
 
-def dot_tc(bm, dots):
+def dot_tc(bm, dots, hits=None):
     """
         Plots tropical cyclone dots on basemap.
         Args:
@@ -117,9 +124,11 @@ def dot_tc(bm, dots):
             datetime_row = dot.datetime.strftime('%d.%m')
             plt.text(x + 20000, y + 20000, datetime_row, fontsize=12, color=color)
         # будет функция возвращающая тип маркера (и цвет и тп)
-        bm.plot(x, y, marker='o', color=color, markersize=5,  markeredgecolor=color, markerfacecolor='white')
+        artists = bm.plot(x, y, marker='o', color=color, markersize=5,  markeredgecolor=color, markerfacecolor='white')
+        if hits is not None:
+            hits.append(('point', dot.observation_id, dot.cic_id, artists[0]))
 
-def dot_zn(bm, dots):
+def dot_zn(bm, dots, hits=None):
     """
         Plots cyclone dots on basemap.
         Args:
@@ -130,11 +139,13 @@ def dot_zn(bm, dots):
         color = 'blue'
         x, y = bm(float(dot.lon), float(dot.lat))
         marker = marker_type()
-        bm.plot(x, y, marker=marker, color=color, markersize=5,  markeredgecolor=color, markerfacecolor='white')
+        artists = bm.plot(x, y, marker=marker, color=color, markersize=5,  markeredgecolor=color, markerfacecolor='white')
+        if hits is not None:
+            hits.append(('point', dot.observation_id, dot.cic_id, artists[0]))
         if dot.slp:
             plt.text(x + 20000, y + 20000, str(dot.slp), fontsize=12, color=color)
 
-def dot_az(bm, dots):
+def dot_az(bm, dots, hits=None):
     """
         Plots anticyclone dots on basemap.
         Args:
@@ -146,7 +157,9 @@ def dot_az(bm, dots):
         color = 'red'
         x, y = bm(float(dot.lon), float(dot.lat))
         marker = marker_type()
-        bm.plot(x, y, marker=marker, color=color, markersize=5,  markeredgecolor=color, markerfacecolor='white')
+        artists = bm.plot(x, y, marker=marker, color=color, markersize=5,  markeredgecolor=color, markerfacecolor='white')
+        if hits is not None:
+            hits.append(('point', dot.observation_id, dot.cic_id, artists[0]))
         if dot.slp:
             plt.text(x + 20000, y + 20000, str(dot.slp), fontsize=12, color=color)
 
@@ -156,6 +169,7 @@ def render_map(
     cys_type_zn: bool,
     cys_type_az: bool,
     blanc_type: str,
+    hits=None,
 ):
     """Build a figure from already loaded and prepared data.
 
@@ -193,14 +207,14 @@ def render_map(
 
 
         # построение линий
-        track_tc(bm, track_view_tc, mon_view_tc)
-        track_zn(bm, track_view_zn)
-        track_az(bm, track_view_az)
+        track_tc(bm, track_view_tc, mon_view_tc, hits=hits)
+        track_zn(bm, track_view_zn, hits=hits)
+        track_az(bm, track_view_az, hits=hits)
 
         # построение точек
-        dot_tc(bm, mon_view_tc)
-        dot_zn(bm, mon_view_zn)
-        dot_az(bm, mon_view_az)
+        dot_tc(bm, mon_view_tc, hits=hits)
+        dot_zn(bm, mon_view_zn, hits=hits)
+        dot_az(bm, mon_view_az, hits=hits)
 
 
         # Легенда

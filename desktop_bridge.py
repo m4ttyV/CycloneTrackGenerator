@@ -148,13 +148,36 @@ def _preview(request):
     )
     from engine.renderer import render_png_bytes
 
-    png = render_png_bytes(prepared, 3 in types, 4 in types, blank, dpi=dpi)
-    return {
+    hitmap = None
+    if _boolean(request, "interactive", False):
+        from engine.hitmap import render_interactive
+        png, hitmap = render_interactive(prepared, 3 in types, 4 in types, blank, dpi=dpi)
+    else:
+        png = render_png_bytes(prepared, 3 in types, 4 in types, blank, dpi=dpi)
+    result = {
         "mime_type": "image/png",
         "encoding": "base64",
         "image_base64": base64.b64encode(png).decode("ascii"),
         "byte_length": len(png),
     }
+    if hitmap is not None:
+        result["hitmap"] = hitmap
+    return result
+
+
+def _read_card(request, kind):
+    from engine.editing import get_record, get_dictionaries
+    key = None if kind == "dictionaries" else _integer(request, "id", None)
+    if kind != "dictionaries" and (key is None or not 0 < key <= 2147483647):
+        raise ValueError("id must be a positive int4")
+    conn = _connect(_string(request, "config_path", "confing.conf"))
+    try:
+        conn.set_session(readonly=True)
+        if kind == "dictionaries":
+            return {"items": get_dictionaries(conn)}
+        return {"record": get_record(conn, kind, key)}
+    finally:
+        conn.close()
 
 
 def _generate(request):
@@ -226,7 +249,13 @@ def dispatch(request):
         return _preview(request)
     if action == "generate":
         return _generate(request)
-    raise ValueError("Unknown action; expected self-test, list-cyclones, preview, or generate")
+    if action == "get-observation":
+        return _read_card(request, "observation")
+    if action == "get-cyclone":
+        return _read_card(request, "cyclone")
+    if action == "get-dictionaries":
+        return _read_card(request, "dictionaries")
+    raise ValueError("Unknown action; expected self-test, list-cyclones, preview, generate, get-observation, get-cyclone or get-dictionaries")
 
 
 def main():

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/pyinstaller-packaging
+      - feature/interactive-map-editing
   workflow_dispatch:
 
 jobs:

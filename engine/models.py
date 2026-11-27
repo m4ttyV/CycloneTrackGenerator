@@ -8,6 +8,7 @@ class TrackRow:
     coords: str
     name: str
     id: str
+    cic_id: int | None = None
 
 
 @dataclass
@@ -17,6 +18,8 @@ class DotRow:
     type_id: int | None
     slp: object
     datetime: object
+    observation_id: int | None = None
+    cic_id: int | None = None
 
 
 @dataclass
@@ -70,7 +73,7 @@ def prepare_rows(
             continue
         track_id = str(track[2])[-2:] if is_track_name else ""
         name = (track[3] if track[3] is not None else "") if is_track_name else ""
-        setting[1].append(TrackRow(row, name, track_id))
+        setting[1].append(TrackRow(row, name, track_id, track[2]))
 
     point_groups = {
         1: (cys_type_tc, prepared.mon_view_tc, prepared.csv_dot_tc),
@@ -87,7 +90,7 @@ def prepare_rows(
         # Pressure labels in the original generator appear only at 00 UTC.
         pressure_label = dot[18] if datetime_dot.strftime("%H") == "00" and is_slp else ""
         subtype = dot[13] if dot[13] else None
-        setting[1].append(DotRow(dot[0], dot[1], subtype, pressure_label, datetime_dot))
+        setting[1].append(DotRow(dot[0], dot[1], subtype, pressure_label, datetime_dot, dot[3], dot[4]))
         setting[2].append(
             CSVRow(str(dot[4])[-2:], datetime_dot, dot[0], dot[1], dot[18])
         )
