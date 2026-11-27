@@ -27,6 +27,18 @@ class InteractiveTests(unittest.TestCase):
                 pixels = list(img.convert("RGB").crop((x-5, y-5, x+6, y+6)).getdata())
                 self.assertTrue(any(b > r + 30 and b > g + 30 for r, g, b in pixels))
 
+    def test_tc_render_and_full_ids_without_labels(self):
+        p = PreparedRows(
+            track_view_tc=[TrackRow("LINESTRING(150 35,155 40)", "", "", 101)],
+            mon_view_tc=[DotRow(150, 35, 2, "", datetime(2026, 1, 1), 111, 101),
+                         DotRow(155, 40, 2, "", datetime(2026, 1, 2), 112, 101)])
+        _, meta = render_interactive(p, False, False, "TC", dpi=45)
+        self.assertEqual([p["observation_id"] for p in meta["points"]], [111,112])
+        self.assertEqual(meta["tracks"][0]["cic_id"], 101)
+        for p, endpoint in zip(meta["points"], meta["tracks"][0]["segments"][0]):
+            self.assertAlmostEqual(p["x"], endpoint[0], places=3)
+            self.assertAlmostEqual(p["y"], endpoint[1], places=3)
+
     def test_clip(self):
         self.assertEqual(clip_segment((-5, 5), (15, 5), (0, 0, 10, 10)), ((0, 5), (10, 5)))
         self.assertIsNone(clip_segment((-5, -5), (-1, -1), (0, 0, 10, 10)))

@@ -42,6 +42,8 @@ def main() -> int:
             raise ValueError(f"Unexpected response: {response}")
         if response["data"]["status"] != "ok" or response["data"]["rendered_png_bytes"] <= 100:
             raise ValueError(f"Invalid self-test result: {response}")
+        if response["data"].get("interactive") is not True:
+            raise ValueError("Frozen EXE did not verify interactive metadata")
     except (ValueError, KeyError, TypeError) as exc:
         print("Engine produced invalid JSON / invalid PNG result", file=sys.stderr)
         print(result.stdout[-4000:], file=sys.stderr)

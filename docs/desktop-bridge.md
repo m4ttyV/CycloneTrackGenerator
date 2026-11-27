@@ -122,3 +122,29 @@ use mocks and do not connect to PostgreSQL or upload to SMB.
 
 For the desktop host, set `UseShellExecute=false`, redirect standard input,
 output and error, configure UTF-8, and asynchronously consume both output pipes.
+
+
+## Interactive preview (read-only first iteration)
+
+Set `"interactive":true` on a preview request. The existing response also
+contains `hitmap` with the exact PNG width and height, a list of points
+(`observation_id`, `cic_id`, `x`, `y`), and tracks (`cic_id`, `segments`).
+Each segment is a pair of [x, y] pixel positions. Coordinates use the PNG's
+top-left origin, including its explicit tight crop. Only actually drawn artists
+are registered; segments are clipped to the map axes. IDs are full database
+primary keys, independent of label visibility.
+
+New read-only commands, all using separate read-only PostgreSQL sessions:
+
+```json
+{"action":"get-observation","id":42}
+{"action":"get-cyclone","id":101}
+{"action":"get-dictionaries"}
+```
+
+The first two return `data.record` with actual database fields. Coordinates
+are the original geographic longitude/latitude, not the displayed 0–360
+longitude. The last returns `data.items` grouped by `category`; the delete
+type (16) is excluded. No update commands, schema migrations or writes are
+provided. The packaged self-test renders a synthetic track and checks IDs
+without using PostgreSQL.
